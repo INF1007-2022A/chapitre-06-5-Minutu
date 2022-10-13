@@ -3,16 +3,74 @@
 
 
 def check_brackets(text, brackets):
-	return False
+	opening_brackets=dict(zip(brackets[0::2],brackets[1::2]))
+	closing_brackets=dict(zip(brackets[1::2],brackets[0::2]))
+
+	bracket_stack=[]
+
+	for chr in text:
+		if chr in opening_brackets:
+			bracket_stack.append(chr)
+		elif chr in closing_brackets:
+			if len(bracket_stack)==0 or bracket_stack[-1]!=closing_brackets[chr]:
+				return False
+			else:
+				bracket_stack.pop()
+
+
+	return len(bracket_stack)==0
 
 def remove_comments(full_text, comment_start, comment_end):
-	return ""
+	while True:
+		start=full_text.find(comment_start)
+		end=full_text.find(comment_end)
+		if start==-1 and end==-1:
+			return full_text
+		elif (start!=-1 and end==-1) or (start==-1 and end!=-1):
+			return None
+		elif end<start:
+			return None
+		elif start!=-1 and end!=-1:
+			return full_text[:start]+full_text[end+len(comment_end):]
+
+
+
 
 def get_tag_prefix(text, opening_tags, closing_tags):
-	return (None, None)
+	for otag,ctag in zip(opening_tags,closing_tags):
+		if text.startswith(otag):
+			return(otag,None)
+		elif text.startswith(ctag):
+			return(None,ctag)
+
+	return(None,None)
+
+
 
 def check_tags(full_text, tag_names, comment_tags):
-	return False
+	text = remove_comments(full_text, *comment_tags)
+	if text is None:
+		return False
+
+	opening_brackets={f'<{name}>':f'</{name}>'for name in tag_names}
+	closing_brackets=dict((y,x) for x,y in opening_brackets.items())
+
+	bracket_stack=[]
+	while len(text)!=0:
+		opening, closing= get_tag_prefix(text, opening_brackets.keys(), closing_brackets.keys())
+
+		if opening is not None:
+			bracket_stack.append(opening)
+			text=text[len(opening):]
+		elif closing is not None:
+			if len(bracket_stack)==0 or bracket_stack[-1] !=closing_brackets[closing]:
+				return False
+			bracket_stack.pop()
+			text=text[len(closing):]
+		else:
+			text=text[1:]
+	return len(bracket_stack)==0
+
 
 
 if __name__ == "__main__":
